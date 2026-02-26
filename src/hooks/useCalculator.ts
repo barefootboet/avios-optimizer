@@ -80,6 +80,8 @@ export function useCalculator(earningCost: number, profile?: UserProfile) {
               cardType: 'premium-plus',
               earningRate: 1 / validEarningCost,
               earningCost: validEarningCost,
+              costCalculationMode: 'simple',
+              aviosSources: [],
             },
           });
         }
