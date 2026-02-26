@@ -1,11 +1,23 @@
 import { z } from 'zod';
 
-const cardTypeSchema = z.enum(['premium-plus', 'free', 'custom']);
+const cardTypeSchema = z.enum(['premium-plus', 'free', 'ba-visa-us', 'flying-blue', 'flying-bronze', 'flying-silver', 'flying-gold', 'amex-transfer', 'chase-transfer', 'capital-one-transfer', 'custom']);
+
+const aviosSourceSchema = z.object({
+  id: z.string(),
+  methodId: cardTypeSchema,
+  methodName: z.string(),
+  amount: z.number(),
+  earningCost: z.number(),
+  earnedDate: z.union([z.date(), z.string().transform((s) => new Date(s))]).optional(),
+});
 
 export const userProfileSchema = z.object({
   cardType: cardTypeSchema,
   earningRate: z.number().finite().positive(),
   earningCost: z.number().finite().positive(),
+  costCalculationMode: z.enum(['simple', 'average', 'portfolio']),
+  customAverageCost: z.number().optional(),
+  aviosSources: z.array(aviosSourceSchema),
   aviosBalance: z.number().finite().nonnegative().optional(),
   customEarningRate: z.number().finite().positive().optional(),
 });
