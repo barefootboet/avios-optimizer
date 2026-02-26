@@ -4,7 +4,7 @@ export interface CardPreset {
   id: CardType;
   name: string;
   earningRate: number; // Avios per £1 spent
-  earningCost: number; // Cost in pence to earn 1 Avios
+  earningCost: number; // Cost in pence to earn 1 Avios (= 1 / earningRate, see constants.ts)
   annualFee: number;
   description: string;
 }
@@ -28,6 +28,7 @@ export interface CalculationInput {
   numberOfPeople: number;
   options: AviosOption[];
   earningCost: number;
+  aviosBalance?: number;    // User's current Avios balance; used for remainingAvios in results
 }
 
 export interface CalculationResult {
@@ -36,9 +37,11 @@ export interface CalculationResult {
   valuePerAvios: number;           // cashSaved / option.avios (in pence)
   profitMargin: number;            // (valuePerAvios / earningCost - 1) * 100
   totalCost: number;               // option.cash + (option.avios * earningCost / 100)
+  perPersonTotalCost?: number;     // totalCost / numberOfPeople (present when numberOfPeople > 1)
   recommendation: 'excellent' | 'good' | 'ok' | 'poor';
-  remainingAvios?: number;
-  isOptimal?: boolean;
+  remainingAvios?: number;         // aviosBalance - option.avios (present when balance provided)
+  isOptimal?: boolean;             // true for the lowest-total-cost viable option
+  isLeastBad?: boolean;            // true when all options are poor; marks the best of a bad set
 }
 
 export interface CalculationHistory {

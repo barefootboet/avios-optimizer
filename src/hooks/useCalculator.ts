@@ -9,15 +9,19 @@ import { storage } from '@/src/lib/storage';
  * Hook for Avios calculator state and actions.
  *
  * @param earningCost - Cost in pence to earn 1 Avios (from profile).
- * @param profile - Optional current profile; used when saving calculation history.
- * @returns State (cashPrice, numberOfPeople, options, results) and actions (setCashPrice, addOption, calculate, etc.).
+ * @param profile - Optional current profile; used when saving calculation history and
+ *                  to pass aviosBalance through to calculateOptionValue for remainingAvios.
+ * @returns State (cashPrice, numberOfPeople, options, results, error) and actions
+ *          (setCashPrice, addOption, calculate, etc.).
  *          `calculate(pendingOption?)` can include the "new row" values without adding them to options.
+ *          `error` is non-null only when the calculation throws; cleared on the next successful run.
  */
 export function useCalculator(earningCost: number, profile?: UserProfile) {
   const [cashPrice, setCashPrice] = useState<number>(0);
   const [numberOfPeople, setNumberOfPeople] = useState<number>(1);
   const [options, setOptions] = useState<AviosOption[]>([]);
   const [results, setResults] = useState<CalculationResult[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const stateRef = useRef<{ cashPrice: number; options: AviosOption[]; numberOfPeople: number }>({
     cashPrice: 0,
@@ -49,7 +53,7 @@ export function useCalculator(earningCost: number, profile?: UserProfile) {
     (pendingOption?: { avios: number; cash: number }) => {
       const { cashPrice: price, options: opts, numberOfPeople: people } = stateRef.current;
       const cost = Number(earningCost);
-      const validEarningCost = cost > 0 && Number.isFinite(cost) ? cost : 0.67;
+      const validEarningCost = cost > 0 && Number.isFinite(cost) ? cost : 0.6667;
 
       const optionsToUse = pendingOption
         ? [...opts, { id: 'pending', avios: pendingOption.avios, cash: pendingOption.cash }]
@@ -65,10 +69,12 @@ export function useCalculator(earningCost: number, profile?: UserProfile) {
           numberOfPeople: people,
           options: optionsToUse,
           earningCost: validEarningCost,
+          aviosBalance: profile?.aviosBalance,
         };
 
         const calculatedResults = calculateAllOptions(input);
         setResults([...calculatedResults]);
+        setError(null);
 
         if (typeof window !== 'undefined') {
           storage.saveCalculation({
@@ -83,20 +89,22 @@ export function useCalculator(earningCost: number, profile?: UserProfile) {
             },
           });
         }
-      } catch (_) {
+      } catch {
         setResults([]);
+        setError('Calculation failed — please check your inputs and try again.');
       }
     },
     [earningCost, profile]
   );
-  
+
   const reset = () => {
     setCashPrice(0);
     setNumberOfPeople(1);
     setOptions([]);
     setResults([]);
+    setError(null);
   };
-  
+
   return {
     cashPrice,
     setCashPrice,
@@ -107,6 +115,7 @@ export function useCalculator(earningCost: number, profile?: UserProfile) {
     removeOption,
     updateOption,
     results,
+    error,
     calculate,
     reset,
   };

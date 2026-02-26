@@ -43,6 +43,8 @@ export function useProfile() {
   };
   
   const updateCustomEarningRate = (rate: number) => {
+    // earningCost = 1 / rate: pence foregone per Avios vs a 1% cashback baseline.
+    // See constants.ts for a full explanation of the opportunity-cost model.
     const earningCost = 1 / rate;
     const newProfile: UserProfile = {
       ...profile,

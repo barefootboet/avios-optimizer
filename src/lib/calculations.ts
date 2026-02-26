@@ -4,31 +4,43 @@ import { RECOMMENDATION_THRESHOLDS } from './constants';
 /**
  * Calculates value metrics for a single Avios option.
  *
- * @param option - The Avios + cash option (avios count and cash in pounds).
+ * Opportunity-cost model: earningCost represents the pence foregone per Avios earned
+ * by using a BA card instead of a 1% cashback card. profitMargin measures how much
+ * better (or worse) the redemption value is vs that earning cost.
+ * See constants.ts for a full explanation of the model.
+ *
+ * @param option - The Avios + cash option (avios count and cash surcharge in pounds).
  * @param cashPrice - Total cash price for the trip (pounds).
- * @param earningCost - Cost in pence to earn 1 Avios (e.g. 0.67 for Premium Plus).
+ * @param earningCost - Cost in pence to earn 1 Avios (e.g. 0.6667 for Premium Plus).
+ * @param numberOfPeople - Number of travellers; used to compute perPersonTotalCost.
  * @param userAviosBalance - Optional current balance; used for remainingAvios.
- * @returns Result with cashSaved, valuePerAvios (pence), profitMargin (%), totalCost (pounds), recommendation.
+ * @returns Result with cashSaved, valuePerAvios (pence), profitMargin (%),
+ *          totalCost (pounds), perPersonTotalCost (pounds), recommendation, remainingAvios.
  *
  * @example
- * Cash price £850, option 43,000 Avios + £169.40, earning cost 0.67p:
- * - cashSaved = 680.60, valuePerAvios = 1.58p, profitMargin ≈ 136%, totalCost ≈ 457.50
+ * Cash price £850, option 43,000 Avios + £169.40, earningCost 0.6667p:
+ * - cashSaved = 680.60, valuePerAvios ≈ 1.58p, profitMargin ≈ 137%, totalCost ≈ 456.68
  */
 export function calculateOptionValue(
   option: AviosOption,
   cashPrice: number,
   earningCost: number,
+  numberOfPeople: number = 1,
   userAviosBalance?: number
 ): CalculationResult {
-  const safeEarningCost = earningCost > 0 && Number.isFinite(earningCost) ? earningCost : 0.67;
+  const safeEarningCost = earningCost > 0 && Number.isFinite(earningCost) ? earningCost : 0.6667;
   const safeAvios = option.avios > 0 && Number.isFinite(option.avios) ? option.avios : 1;
+  const safePeople = numberOfPeople >= 1 && Number.isFinite(numberOfPeople)
+    ? Math.round(numberOfPeople)
+    : 1;
 
   const cashSaved = cashPrice - option.cash;
   const valuePerAvios = safeAvios > 0 ? (cashSaved / safeAvios) * 100 : 0;
   const profitMargin = safeEarningCost > 0 ? ((valuePerAvios / safeEarningCost) - 1) * 100 : 0;
   const totalCost = option.cash + (option.avios * safeEarningCost / 100);
-  
-  // Determine recommendation level
+  const perPersonTotalCost = safePeople > 1 ? totalCost / safePeople : undefined;
+
+  // Determine recommendation level using shared thresholds (see constants.ts)
   let recommendation: CalculationResult['recommendation'];
   if (profitMargin >= RECOMMENDATION_THRESHOLDS.excellent * 100) {
     recommendation = 'excellent';
@@ -39,41 +51,53 @@ export function calculateOptionValue(
   } else {
     recommendation = 'poor';
   }
-  
+
   return {
     option,
     cashSaved,
     valuePerAvios,
     profitMargin,
     totalCost,
+    perPersonTotalCost,
     recommendation,
-    remainingAvios: userAviosBalance ? userAviosBalance - option.avios : undefined,
+    remainingAvios: userAviosBalance !== undefined ? userAviosBalance - option.avios : undefined,
   };
 }
 
 /**
- * Calculates results for all options and marks the optimal one (lowest total cost among viable options).
+ * Calculates results for all options and marks the optimal or least-bad one.
  *
- * @param input - Cash price, number of people, options, and earning cost.
- * @returns Results sorted by total cost ascending; one result has isOptimal true.
+ * - Optimal: lowest total cost among options with profitMargin >= 0 (viable options).
+ * - Least bad: if no options are viable, the option with the lowest total cost is
+ *   marked isLeastBad=true to guide users who should consider paying cash instead.
+ *
+ * @param input - Cash price, number of people, options, earning cost, and optional aviosBalance.
+ * @returns Results sorted by total cost ascending; one result has isOptimal or isLeastBad true.
  */
 export function calculateAllOptions(input: CalculationInput): CalculationResult[] {
   const results = input.options.map(option =>
-    calculateOptionValue(option, input.cashPrice, input.earningCost)
+    calculateOptionValue(
+      option,
+      input.cashPrice,
+      input.earningCost,
+      input.numberOfPeople,
+      input.aviosBalance,
+    )
   );
-  
-  // Find optimal: lowest total cost among options with positive profit margin
-  const viableOptions = results.filter(r => r.profitMargin >= 0);
-  
-  if (viableOptions.length > 0) {
-    const optimal = viableOptions.reduce((best, current) =>
-      current.totalCost < best.totalCost ? current : best
-    );
-    optimal.isOptimal = true;
+
+  // Sort first so we can do stable immutable marking
+  const sorted = [...results].sort((a, b) => a.totalCost - b.totalCost);
+
+  // Find optimal: lowest total cost among options with non-negative profit margin
+  const viableResults = sorted.filter(r => r.profitMargin >= 0);
+
+  if (viableResults.length > 0) {
+    const optimalResult = viableResults[0]; // already sorted ascending
+    return sorted.map(r => ({ ...r, isOptimal: r === optimalResult }));
   }
-  
-  // Sort by total cost (ascending)
-  return results.sort((a, b) => a.totalCost - b.totalCost);
+
+  // All options are poor — mark least bad (first in sorted order) for guidance
+  return sorted.map((r, i) => ({ ...r, isLeastBad: i === 0 }));
 }
 
 /**

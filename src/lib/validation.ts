@@ -21,6 +21,7 @@ export const calculationInputSchema = z.object({
   numberOfPeople: z.number().int().positive(),
   options: z.array(aviosOptionSchema),
   earningCost: z.number().finite().positive(),
+  aviosBalance: z.number().finite().nonnegative().optional(),
 });
 
 const recommendationSchema = z.enum(['excellent', 'good', 'ok', 'poor']);
@@ -31,9 +32,11 @@ export const calculationResultSchema = z.object({
   valuePerAvios: z.number().finite(),
   profitMargin: z.number().finite(),
   totalCost: z.number().finite().nonnegative(),
+  perPersonTotalCost: z.number().finite().nonnegative().optional(),
   recommendation: recommendationSchema,
   remainingAvios: z.number().finite().optional(),
   isOptimal: z.boolean().optional(),
+  isLeastBad: z.boolean().optional(),
 });
 
 export const calculationHistorySchema = z.object({

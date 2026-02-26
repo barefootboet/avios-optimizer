@@ -4,8 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src
 import { Label } from '@/src/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/components/ui/select';
 import { Input } from '@/src/components/ui/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/src/components/ui/tooltip';
 import { CARD_PRESETS } from '@/src/lib/constants';
 import { CardType } from '@/src/lib/types';
+import { Info } from 'lucide-react';
 
 interface SetupFormProps {
   cardType: CardType;
@@ -50,9 +52,37 @@ export function SetupForm({
             </SelectContent>
           </Select>
           {selectedPreset && (
-            <p className="text-sm text-muted-foreground">
-              {selectedPreset.description} · Earning cost: {selectedPreset.earningCost.toFixed(2)}p per Avios
-            </p>
+            <TooltipProvider>
+              <p className="text-sm text-muted-foreground flex items-center gap-1 flex-wrap">
+                {selectedPreset.description}
+                {' · '}
+                Earning cost:{' '}
+                <span className="font-medium text-foreground">
+                  {selectedPreset.earningCost.toFixed(4)}p
+                </span>{' '}
+                per Avios
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center cursor-help">
+                      <Info className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                      <span className="sr-only">What is earning cost?</span>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-72">
+                    <p>
+                      Earning cost = 1 ÷ earning rate. It represents the pence you forgo per
+                      Avios earned by using your BA card instead of a 1% cashback card.
+                    </p>
+                    <p className="mt-1">
+                      Premium Plus: 1.5 Avios/£1 → cost = 1 ÷ 1.5 = 0.6667p/Avios.
+                    </p>
+                    <p className="mt-1">
+                      Profit Margin = (value per Avios ÷ earning cost − 1) × 100.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </p>
+            </TooltipProvider>
           )}
         </div>
         
