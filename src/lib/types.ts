@@ -58,4 +58,19 @@ export interface CalculationInput {
 
 export interface CalculationResult {
   option: AviosOption;
+  cashSaved: number;
+  valuePerAvios: number;
+  profitMargin: number;
+  totalCost: number;
+  recommendation: 'excellent' | 'good' | 'ok' | 'poor';
+  remainingAvios?: number;
+  isOptimal?: boolean;
+}
+
+export interface CalculationHistory {
+  id: string;
+  timestamp: number;
+  input: CalculationInput;
+  results: CalculationResult[];
+  profile: UserProfile;
 }
