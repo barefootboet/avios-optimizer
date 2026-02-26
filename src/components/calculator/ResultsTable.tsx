@@ -1,10 +1,10 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/src/components/ui/table';
-import { CalculationResult } from '@/src/lib/types';
-import { formatCurrency, formatAvios, formatPercentage, formatValuePerAvios } from '@/src/lib/calculations';
-import { Badge } from '@/src/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { CalculationResult } from '@/lib/types';
+import { formatCurrency, formatAvios, formatPercentage, formatValuePerAvios } from '@/lib/calculations';
+import { Badge } from '@/components/ui/badge';
 
 interface ResultsTableProps {
   results: CalculationResult[];

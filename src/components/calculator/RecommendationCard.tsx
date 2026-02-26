@@ -1,8 +1,8 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
-import { CalculationResult } from '@/src/lib/types';
-import { formatCurrency, formatAvios, formatPercentage, formatValuePerAvios } from '@/src/lib/calculations';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CalculationResult } from '@/lib/types';
+import { formatCurrency, formatAvios, formatPercentage, formatValuePerAvios } from '@/lib/calculations';
 import { CheckCircle2 } from 'lucide-react';
 
 interface RecommendationCardProps {

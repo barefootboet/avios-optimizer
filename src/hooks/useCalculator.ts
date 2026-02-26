@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { AviosOption, CalculationInput, CalculationResult, UserProfile } from '@/src/lib/types';
-import { calculateAllOptions } from '@/src/lib/calculations';
-import { storage } from '@/src/lib/storage';
+import { AviosOption, CalculationInput, CalculationResult, UserProfile } from '@/lib/types';
+import { calculateAllOptions } from '@/lib/calculations';
+import { storage } from '@/lib/storage';
 
 /**
  * Hook for Avios calculator state and actions.

@@ -1,18 +1,44 @@
-export type CardType = 'premium-plus' | 'free' | 'custom';
+export type CardType = 
+  | 'premium-plus' 
+  | 'free' 
+  | 'ba-visa-us'
+  | 'flying-blue'
+  | 'flying-bronze'
+  | 'flying-silver'
+  | 'flying-gold'
+  | 'amex-transfer'
+  | 'chase-transfer'
+  | 'capital-one-transfer'
+  | 'custom';
+
+export type CostCalculationMode = 'simple' | 'average' | 'portfolio';
 
 export interface CardPreset {
   id: CardType;
   name: string;
-  earningRate: number; // Avios per £1 spent
-  earningCost: number; // Cost in pence to earn 1 Avios
+  category?: string;
+  earningRate: number;
+  earningCost: number;
   annualFee: number;
   description: string;
 }
 
+export interface AviosSource {
+  id: string;
+  methodId: CardType;
+  methodName: string;
+  amount: number;
+  earningCost: number;
+  earnedDate?: Date;
+}
+
 export interface UserProfile {
   cardType: CardType;
-  earningRate: number;      // e.g., 1.5 Avios per £1
-  earningCost: number;      // e.g., 0.67p per Avios
+  earningRate: number;
+  earningCost: number;
+  costCalculationMode: CostCalculationMode;
+  customAverageCost?: number;
+  aviosSources: AviosSource[];
   aviosBalance?: number;
   customEarningRate?: number;
 }
@@ -24,7 +50,7 @@ export interface AviosOption {
 }
 
 export interface CalculationInput {
-  cashPrice: number;        // Total cash price for all people
+  cashPrice: number;
   numberOfPeople: number;
   options: AviosOption[];
   earningCost: number;
@@ -32,19 +58,4 @@ export interface CalculationInput {
 
 export interface CalculationResult {
   option: AviosOption;
-  cashSaved: number;               // cashPrice - option.cash
-  valuePerAvios: number;           // cashSaved / option.avios (in pence)
-  profitMargin: number;            // (valuePerAvios / earningCost - 1) * 100
-  totalCost: number;               // option.cash + (option.avios * earningCost / 100)
-  recommendation: 'excellent' | 'good' | 'ok' | 'poor';
-  remainingAvios?: number;
-  isOptimal?: boolean;
-}
-
-export interface CalculationHistory {
-  id: string;
-  timestamp: number;
-  input: CalculationInput;
-  results: CalculationResult[];
-  profile: UserProfile;
 }
