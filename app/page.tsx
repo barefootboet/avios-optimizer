@@ -1,65 +1,83 @@
-import Image from "next/image";
+'use client';
+
+import { useRef, useEffect } from 'react';
+import { SetupForm } from '@/src/components/calculator/SetupForm';
+import { CalculatorForm } from '@/src/components/calculator/CalculatorForm';
+import { ResultsTable } from '@/src/components/calculator/ResultsTable';
+import { RecommendationCard } from '@/src/components/calculator/RecommendationCard';
+import { useProfile } from '@/src/hooks/useProfile';
+import { useCalculator } from '@/src/hooks/useCalculator';
 
 export default function Home() {
+  const { profile, updateCardType, updateCustomEarningRate, updateAviosBalance } = useProfile();
+  const calculator = useCalculator(profile.earningCost, profile);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  const optimalResult = calculator.results.find(r => r.isOptimal);
+
+  useEffect(() => {
+    if (calculator.results.length > 0 && resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      resultsRef.current.focus({ preventScroll: true });
+    }
+  }, [calculator.results.length]);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 py-8 px-4">
+      <a
+        href="#results"
+        className="absolute left-4 -top-20 z-50 px-4 py-2 bg-primary text-primary-foreground rounded-md outline-none ring-2 ring-transparent focus:top-4 focus:ring-ring transition-[top]"
+      >
+        Skip to results
+      </a>
+      <div className="max-w-6xl mx-auto space-y-8">
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl font-bold tracking-tight">
+            Avios Optimizer
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-lg text-muted-foreground">
+            Find the best value when booking with British Airways Avios
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+        
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="space-y-6">
+            <SetupForm
+              cardType={profile.cardType}
+              customEarningRate={profile.customEarningRate}
+              aviosBalance={profile.aviosBalance}
+              onCardTypeChange={updateCardType}
+              onCustomEarningRateChange={updateCustomEarningRate}
+              onAviosBalanceChange={updateAviosBalance}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            
+            <CalculatorForm
+              cashPrice={calculator.cashPrice}
+              numberOfPeople={calculator.numberOfPeople}
+              options={calculator.options}
+              onCashPriceChange={calculator.setCashPrice}
+              onNumberOfPeopleChange={calculator.setNumberOfPeople}
+              onAddOption={calculator.addOption}
+              onRemoveOption={calculator.removeOption}
+              onUpdateOption={calculator.updateOption}
+              onCalculate={calculator.calculate}
+            />
+          </div>
+          
+          <div
+            id="results"
+            ref={resultsRef}
+            tabIndex={-1}
+            role="region"
+            aria-live="polite"
+            aria-label="Calculation results"
+            className="space-y-6 outline-none"
           >
-            Documentation
-          </a>
+            {optimalResult && <RecommendationCard result={optimalResult} />}
+            {calculator.results.length > 0 && <ResultsTable results={calculator.results} />}
+          </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
